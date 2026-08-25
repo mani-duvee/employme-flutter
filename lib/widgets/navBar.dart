@@ -12,20 +12,27 @@ class NavBar extends StatefulWidget implements PreferredSizeWidget{
 Size get preferredSize => const Size.fromHeight(60);
 }
 class NavBarState extends State<NavBar>{
+
+  
   @override
   Widget build(BuildContext context) {
     const Title = "My Work Hub";
+    final screenWidth = MediaQuery.of(context).size.width;
     // TODO: implement build
     return Container(
-      height: 160,
-      color: Colors.red,
+      margin: EdgeInsets.only(top:33),
+      height: screenWidth >600?160:80,
+       color: Colors.red,
       padding: EdgeInsets.all(8),
       // margin: EdgeInsets.only(top: 33),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
           GestureDetector(
-            onTap: (){print("hiii");},
+            onTap: (){
+              print( "Screen sidesc : $screenWidth");
+              Scaffold.of(context).openDrawer();
+              },
             child: Icon(Icons.menu , color: Colors.white,),
           ),
           Text(Title, style: TextStyle(color: Colors.white, fontSize: 17,fontWeight: FontWeight.w500),),

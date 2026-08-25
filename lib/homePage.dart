@@ -2,15 +2,28 @@ import 'package:flutter/material.dart';
 import './widgets/navBar.dart';
 import './widgets/sideBar.dart';
 
-class HomePage extends StatelessWidget{
+class HomePage extends StatefulWidget{
   const HomePage({super.key});
+ @override
+  State<StatefulWidget> createState() {
 
-  @override
+    return HomePageState();
+
+  }
+
+}
+  class HomePageState extends State<HomePage>{
+
+    final GlobalKey<ScaffoldState> openSideBar =GlobalKey<ScaffoldState>();
+
+    @override
   Widget build(BuildContext context) {
     // TODO: implement build
+
     return Scaffold(
+      key: openSideBar,
       appBar: NavBar(),
-      drawer: Sidebar() ,
+      drawer:  Sidebar() ,
     );
   }
 }
