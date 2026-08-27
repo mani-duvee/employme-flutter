@@ -20,7 +20,8 @@ class NavBarState extends State<NavBar>{
     final screenWidth = MediaQuery.of(context).size.width;
     // TODO: implement build
     return Container(
-      margin: EdgeInsets.only(top:33),
+      // margin: EdgeInsets.only(top:33),
+      margin: EdgeInsets.only(top:65),
       height: screenWidth >600?160:80,
        color: const Color(0xFF155DFC),
       padding: EdgeInsets.all(8),
