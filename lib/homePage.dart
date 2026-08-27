@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import './widgets/navBar.dart';
-import './widgets/sideBar.dart';
+import './layout/sidebar/sideBar.dart';
+import './features/employeeProfile/profilepage.dart';
 
 class HomePage extends StatefulWidget{
   const HomePage({super.key});
@@ -24,6 +25,7 @@ class HomePage extends StatefulWidget{
       key: openSideBar,
       appBar: NavBar(),
       drawer:  Sidebar() ,
+      body: Profilepage(),
     );
   }
 }

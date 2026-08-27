@@ -8,7 +8,8 @@ class SideBarAvatharProfile extends StatelessWidget {
     
     return 
        Container(
-                 color: Colors.blue,
+                      color: const Color(0xFF155DFC),
+
                   height: MediaQuery.of(context).size.height /4, width:  MediaQuery.of(context).size.width ,
                   margin: EdgeInsets.all(0),
                   padding: EdgeInsets.all(10),
@@ -26,7 +27,8 @@ class SideBarAvatharProfile extends StatelessWidget {
                        // alignment: Alignment(0, 0),
                         height: 70, width: 70, 
                         decoration:BoxDecoration(
-                          color: Colors.white,
+                              
+
                           shape: BoxShape.circle
                           
                         ) ,

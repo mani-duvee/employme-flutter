@@ -22,7 +22,7 @@ class NavBarState extends State<NavBar>{
     return Container(
       margin: EdgeInsets.only(top:33),
       height: screenWidth >600?160:80,
-       color: Colors.red,
+       color: const Color(0xFF155DFC),
       padding: EdgeInsets.all(8),
       // margin: EdgeInsets.only(top: 33),
       child: Row(

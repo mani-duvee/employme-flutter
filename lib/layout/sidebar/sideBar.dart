@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import './sideBarAvatharProfile.dart';
 import "./sideBarList.dart";
+import './sideBarLogout.dart';
 
 class Sidebar extends StatelessWidget {
   const Sidebar({super.key});
@@ -21,7 +22,8 @@ class Sidebar extends StatelessWidget {
         height: MediaQuery.of(context).size.height,
         child: Column(children: <Widget>[
               SideBarAvatharProfile(),
-              Sidebarlist()
+              Sidebarlist(),
+              SideBarLogout()
 
         ],
       ),
