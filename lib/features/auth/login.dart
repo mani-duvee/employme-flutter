@@ -1,223 +1,185 @@
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import '../../homePage.dart';
+import '../../http/PostApiCalls.dart';
+import './utils/DeviceInfo.dart';
+import '../../widgets/InputFiled.dart';
 
 class LoginPage extends StatefulWidget {
   final Function(Map<String, dynamic> payload)? onLogin;
+  final String endpoint;
 
-  const LoginPage({super.key, this.onLogin});
+  const LoginPage({
+    super.key,
+    this.onLogin,
+    this.endpoint = 'employee/auth/login',
+  });
 
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _formKey = GlobalKey<FormState>();
+  final phoneController = TextEditingController();
+  final passwordController = TextEditingController();
 
-  final TextEditingController _phoneController =
-      TextEditingController(text: '8000000000');
-  final TextEditingController _passwordController =
-      TextEditingController(text: 'Test@123');
-
-  bool _isPasswordVisible = false;
-  bool _isLoading = false;
+  bool passwordVisible = false;
+  bool loading = false;
 
   @override
   void dispose() {
-    _phoneController.dispose();
-    _passwordController.dispose();
+    phoneController.dispose();
+    passwordController.dispose();
     super.dispose();
   }
 
-  String _getDeviceType() {
-    if (kIsWeb) return 'WEB';
-    if (Platform.isAndroid) return 'ANDROID';
-    if (Platform.isIOS) return 'IOS';
-    return 'WEB';
-  }
-
-  String _getDeviceName() {
-    if (kIsWeb) return 'Chrome on Windows';
-    if (Platform.isAndroid) return 'Android Device';
-    if (Platform.isIOS) return 'iPhone';
-    return 'Chrome on Windows';
-  }
-
-  /// Construct login payload behind the scenes matching:
-  /// {
-  ///   "phoneNumber": "8000000000",
-  ///   "password": "Test@123",
-  ///   "device": {
-  ///     "deviceId": "eb3b0c0e-c488-45fe-a9a6-f554f3d9a83e",
-  ///     "deviceType": "WEB",
-  ///     "deviceName": "Chrome on Windows"
-  ///   }
-  /// }
-  Map<String, dynamic> get _loginPayload => {
-        "phoneNumber": _phoneController.text.trim(),
-        "password": _passwordController.text,
-        "device": {
-          "deviceId": "eb3b0c0e-c488-45fe-a9a6-f554f3d9a83e",
-          "deviceType": _getDeviceType(),
-          "deviceName": _getDeviceName(),
-        }
+  Map<String, dynamic> get employeeLodinData => {
+        "phoneNumber": phoneController.text.trim(),
+        "password": passwordController.text,
+        "device": DeviceInfo.deviceData,
       };
 
-  void _handleLogin() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      final payload = _loginPayload;
-
-      // Invoke callback if provided
-      if (widget.onLogin != null) {
-        widget.onLogin!(payload);
-      }
-
-      // Simulate network request
-      await Future.delayed(const Duration(milliseconds: 600));
-
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login successful'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
+  void employeeLoginCall() {
+    if (phoneController.text.trim().isEmpty ||
+        passwordController.text.isEmpty) {
+      _showTopSnackBar('Please enter phone number and password', isSuccess: false);
+      return;
     }
+
+    final payload = employeeLodinData;
+    widget.onLogin?.call(payload);
+
+    PostApiCalls.post(
+      endpoint: widget.endpoint,
+      data: payload,
+      onLoadingStart: () => setState(() => loading = true),
+      onLoadingEnd: () => setState(() => loading = false),
+      successCallback: (response) {
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      },
+      failedCallback: (response) {
+        if (!mounted) return;
+        final message = (response is Map && response['message'] != null)
+            ? response['message'].toString()
+            : 'Login failed';
+        _showTopSnackBar(message, isSuccess: false);
+      },
+    );
+  }
+
+  void _showTopSnackBar(String message, {required bool isSuccess}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+        ),
+        backgroundColor: isSuccess ? Colors.green.shade600 : Colors.red.shade600,
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.only(
+          bottom: MediaQuery.of(context).size.height - 130,
+          left: 20,
+          right: 20,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text('Login'),
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Form(
-                  key: _formKey,
+      backgroundColor: Colors.blueGrey.shade50,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Card(
+                elevation: 6,
+                shadowColor: Colors.black26,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                child: Padding(
+                  padding: const EdgeInsets.all(28),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Icon(
-                        Icons.lock_person_outlined,
-                        size: 64,
-                        color: Colors.blue,
+                      CircleAvatar(
+                        radius: 36,
+                        backgroundColor: Colors.blue.shade50,
+                        child: Icon(Icons.person_pin, size: 44, color: Colors.blue.shade700),
                       ),
                       const SizedBox(height: 16),
-                      const Text(
-                        'Welcome Back',
+                      Text(
+                        'Employee Login',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
+                          color: Colors.blueGrey.shade900,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Please login to continue',
+                      const SizedBox(height: 6),
+                      Text(
+                        'Sign in to access your workspace',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(fontSize: 14, color: Colors.blueGrey.shade500),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 28),
 
-                      // Phone Number Field
-                      TextFormField(
-                        controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        decoration: InputDecoration(
-                          labelText: 'Phone Number',
-                          prefixIcon: const Icon(Icons.phone),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter phone number';
-                          }
-                          return null;
-                        },
+                      InputField(
+                        label: 'Phone Number',
+                        type: TextInputType.phone,
+                        controller: phoneController,
+                        placeholder: 'Enter phone number',
+                        inputSelectedColor: Colors.blue.shade700,
+                        textWeight: FontWeight.w500,
                       ),
                       const SizedBox(height: 16),
 
-                      // Password Field
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: !_isPasswordVisible,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          prefixIcon: const Icon(Icons.lock),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isPasswordVisible
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _isPasswordVisible = !_isPasswordVisible;
-                              });
-                            },
+                      InputField(
+                        label: 'Password',
+                        type: TextInputType.visiblePassword,
+                        controller: passwordController,
+                        placeholder: 'Enter password',
+                        obscureText: !passwordVisible,
+                        inputSelectedColor: Colors.blue.shade700,
+                        textWeight: FontWeight.w500,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            passwordVisible ? Icons.visibility : Icons.visibility_off,
+                            color: Colors.grey.shade600,
                           ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          onPressed: () => setState(() => passwordVisible = !passwordVisible),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter password';
-                          }
-                          return null;
-                        },
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 28),
 
-                      // Login Button
-                      ElevatedButton(
-                        onPressed: _isLoading ? null : _handleLogin,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      SizedBox(
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: loading ? null : employeeLoginCall,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue.shade700,
+                            foregroundColor: Colors.white,
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
+                          child: loading
+                              ? const SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                                )
+                              : const Text('Login', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text(
-                                'Login',
-                                style: TextStyle(fontSize: 16),
-                              ),
                       ),
                     ],
                   ),

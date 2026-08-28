@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import './features/auth/login.dart';
+import './features/auth/utils/DeviceInfo.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env.development");
+  await DeviceInfo.init();
   runApp(const MyApp());
 }
 
