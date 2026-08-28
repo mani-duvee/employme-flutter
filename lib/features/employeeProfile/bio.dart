@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class Bio extends StatelessWidget {
   const Bio({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+   return Padding(
       padding: const EdgeInsets.all(10),
       child: Container(
         height: 100,
