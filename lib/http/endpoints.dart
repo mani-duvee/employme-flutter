@@ -15,3 +15,4 @@ class Endpoints {
 
 // Top-level constants for direct access without Endpoints. prefix
 const String EMPLOYEE_LOGINE = Endpoints.EMPLOYEE_LOGINE;
+const String EMPLOYEE_PROFILE = Endpoints.EMPLOYEE_PROFILE;

@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class Bio extends StatelessWidget {
-  const Bio({super.key});
+  final Map<String, dynamic>? profileData;
+
+  const Bio({super.key, this.profileData});
 
   @override
   Widget build(BuildContext context) {
-   return Padding(
+    final String firstName = profileData?['firstName']?.toString() ?? '';
+    final String lastName = profileData?['lastName']?.toString() ?? '';
+    final String fullName = "$firstName $lastName".trim();
+    final String? photoUrl = profileData?['photo']?.toString();
+
+    return Padding(
       padding: const EdgeInsets.all(10),
       child: Container(
         height: 100,
@@ -31,28 +36,32 @@ class Bio extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: ClipOval(
-                    child: Image.asset(
-                      "assets/images/IMG_0556.jpg",
-                      fit: BoxFit.cover,
-                    ),
+                    child: photoUrl != null && photoUrl.isNotEmpty
+                        ? Image.network(
+                            photoUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Image.asset("assets/images/IMG_0556.jpg", fit: BoxFit.cover),
+                          )
+                        : Image.asset(
+                            "assets/images/IMG_0556.jpg",
+                            fit: BoxFit.cover,
+                          ),
                   ),
                 ),
-
-                const SizedBox(width: 8),
-
+                const SizedBox(width: 12),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Manikandan",
-                      style: TextStyle(
+                    Text(
+                      fullName.isNotEmpty ? fullName : "N/A",
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
                     ),
-
                     const SizedBox(height: 5),
-
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
@@ -67,6 +76,7 @@ class Bio extends StatelessWidget {
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
+                          fontSize: 12,
                         ),
                       ),
                     ),
@@ -74,11 +84,10 @@ class Bio extends StatelessWidget {
                 ),
               ],
             ),
-
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: 15,
-                vertical: 5,
+                vertical: 8,
               ),
               decoration: BoxDecoration(
                 color: Colors.black,
@@ -88,6 +97,8 @@ class Bio extends StatelessWidget {
                 "Download PDF",
                 style: TextStyle(
                   color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
