@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import '../../homePage.dart';
 import '../../http/PostApiCalls.dart';
+import '../../http/TokenStorage.dart';
+import '../../http/endpoints.dart';
 import './utils/DeviceInfo.dart';
 import '../../widgets/InputFiled.dart';
 
 class LoginPage extends StatefulWidget {
   final Function(Map<String, dynamic> payload)? onLogin;
-  final String endpoint;
+  final String? endpoint;
 
   const LoginPage({
     super.key,
     this.onLogin,
-    this.endpoint = 'employee/auth/login',
+    this.endpoint,
   });
 
   @override
@@ -41,7 +43,8 @@ class _LoginPageState extends State<LoginPage> {
   void employeeLoginCall() {
     if (phoneController.text.trim().isEmpty ||
         passwordController.text.isEmpty) {
-      _showTopSnackBar('Please enter phone number and password', isSuccess: false);
+      _showTopSnackBar('Please enter phone number and password',
+          isSuccess: false);
       return;
     }
 
@@ -49,11 +52,12 @@ class _LoginPageState extends State<LoginPage> {
     widget.onLogin?.call(payload);
 
     PostApiCalls.post(
-      endpoint: widget.endpoint,
+      endpoint: EMPLOYEE_LOGINE,
       data: payload,
       onLoadingStart: () => setState(() => loading = true),
       onLoadingEnd: () => setState(() => loading = false),
-      successCallback: (response) {
+      successCallback: (response) async {
+        await TokenStorage.saveTokensFromResponse(response);
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
@@ -71,24 +75,41 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _showTopSnackBar(String message, {required bool isSuccess}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+    ScaffoldMessenger.of(context).clearMaterialBanners();
+    ScaffoldMessenger.of(context).clearSnackBars();
+
+    ScaffoldMessenger.of(context).showMaterialBanner(
+      MaterialBanner(
+        elevation: 2,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        backgroundColor:
+            isSuccess ? Colors.green.shade700 : Colors.red.shade700,
         content: Text(
           message,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
         ),
-        backgroundColor: isSuccess ? Colors.green.shade600 : Colors.red.shade600,
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.only(
-          bottom: MediaQuery.of(context).size.height - 130,
-          left: 20,
-          right: 20,
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 3),
+        actions: [
+          IconButton(
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            icon: const Icon(Icons.close, color: Colors.white, size: 18),
+            onPressed: () {
+              ScaffoldMessenger.of(context).clearMaterialBanners();
+            },
+          ),
+        ],
       ),
     );
+
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearMaterialBanners();
+      }
+    });
   }
 
   @override
@@ -104,7 +125,8 @@ class _LoginPageState extends State<LoginPage> {
               child: Card(
                 elevation: 6,
                 shadowColor: Colors.black26,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
                 child: Padding(
                   padding: const EdgeInsets.all(28),
                   child: Column(
@@ -114,7 +136,8 @@ class _LoginPageState extends State<LoginPage> {
                       CircleAvatar(
                         radius: 36,
                         backgroundColor: Colors.blue.shade50,
-                        child: Icon(Icons.person_pin, size: 44, color: Colors.blue.shade700),
+                        child: Icon(Icons.person_pin,
+                            size: 44, color: Colors.blue.shade700),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -130,12 +153,13 @@ class _LoginPageState extends State<LoginPage> {
                       Text(
                         'Sign in to access your workspace',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 14, color: Colors.blueGrey.shade500),
+                        style: TextStyle(
+                            fontSize: 14, color: Colors.blueGrey.shade500),
                       ),
                       const SizedBox(height: 28),
-
                       InputField(
                         label: 'Phone Number',
+                        maxLength: 10,
                         type: TextInputType.phone,
                         controller: phoneController,
                         placeholder: 'Enter phone number',
@@ -143,7 +167,6 @@ class _LoginPageState extends State<LoginPage> {
                         textWeight: FontWeight.w500,
                       ),
                       const SizedBox(height: 16),
-
                       InputField(
                         label: 'Password',
                         type: TextInputType.visiblePassword,
@@ -154,14 +177,16 @@ class _LoginPageState extends State<LoginPage> {
                         textWeight: FontWeight.w500,
                         suffixIcon: IconButton(
                           icon: Icon(
-                            passwordVisible ? Icons.visibility : Icons.visibility_off,
+                            passwordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
                             color: Colors.grey.shade600,
                           ),
-                          onPressed: () => setState(() => passwordVisible = !passwordVisible),
+                          onPressed: () => setState(
+                              () => passwordVisible = !passwordVisible),
                         ),
                       ),
                       const SizedBox(height: 28),
-
                       SizedBox(
                         height: 48,
                         child: ElevatedButton(
@@ -170,15 +195,20 @@ class _LoginPageState extends State<LoginPage> {
                             backgroundColor: Colors.blue.shade700,
                             foregroundColor: Colors.white,
                             elevation: 2,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
                           ),
                           child: loading
                               ? const SizedBox(
                                   height: 22,
                                   width: 22,
-                                  child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2.5, color: Colors.white),
                                 )
-                              : const Text('Login', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              : const Text('Login',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],

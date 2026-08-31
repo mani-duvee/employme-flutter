@@ -5,7 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'TokenStorage.dart';
 
-class PostApiCalls {
+class GetApiCalls {
   /// Reads BASE_URL from the loaded .env file (.env.development /
   /// .env.production). Throws if it's missing, so a misconfigured
   /// environment fails loudly instead of silently hitting the wrong host.
@@ -27,18 +27,17 @@ class PostApiCalls {
     return int.tryParse(raw ?? '') ?? 10;
   }
 
-  /// Common POST API Call
+  /// Common GET API Call
   ///
   /// [endpoint]         -> API endpoint, example: "emp/home" or "system/{systemid}"
   /// [pathParams]       -> Optional. Replaces "{key}" placeholders in endpoint.
-  /// [data]             -> Required. Request body / payload.
+  /// [queryParams]      -> Optional. Appended to the URL as "?key=value&...".
   /// [successCallback]  -> Called with response when API succeeds (2xx). Optional.
   /// [failedCallback]   -> Called with response when API fails / errors. Optional.
   /// [showSuccessNotif] -> Default true. If true, shows the notification widget
   ///                       with `response['message']` on success. Set false to
   ///                       silence it.
   /// [showFailedNotif]  -> Default true. Same, but for failure/error.
-  /// [formData]         -> If true, sends multipart/form-data.
   /// [onLoadingStart]   -> Called right before the request starts. Optional.
   /// [onLoadingEnd]     -> Called after success/failure/error. Optional.
   /// [responseNotifier] -> Optional. If passed, gets updated with the parsed
@@ -48,15 +47,14 @@ class PostApiCalls {
   ///
   /// NOTE: This function handles async/await internally.
   /// Callers should NOT use `await` on this — just call it and pass callbacks.
-  static Future<void> post({
+  static Future<void> get({
     required String endpoint,
     Map<String, String>? pathParams,
-    required Map<String, dynamic> data,
+    Map<String, dynamic>? queryParams,
     Function(dynamic response)? successCallback,
     Function(dynamic response)? failedCallback,
     bool showSuccessNotif = true,
     bool showFailedNotif = true,
-    bool formData = false,
     void Function()? onLoadingStart,
     void Function()? onLoadingEnd,
     ValueNotifier<dynamic>? responseNotifier,
@@ -76,53 +74,34 @@ class PostApiCalls {
         });
       }
 
-      final String url = "$baseUrl$resolvedEndpoint";
+      Uri uri = Uri.parse("$baseUrl$resolvedEndpoint");
 
-      print("POST API: $url");
-      print("Request Data: $data");
+      // --------------------------------------------------
+      // APPEND QUERY PARAMS
+      // --------------------------------------------------
+      if (queryParams != null && queryParams.isNotEmpty) {
+        final stringParams =
+            queryParams.map((key, value) => MapEntry(key, value.toString()));
+        uri = uri.replace(
+          queryParameters: {
+            ...uri.queryParameters,
+            ...stringParams,
+          },
+        );
+      }
+
+      print("GET API: $uri");
 
       // Fetch stored access token
       final String? token = await TokenStorage.getAccessToken();
 
-      http.Response response;
+      final Map<String, String> headers = {
+        "Accept": "application/json",
+        if (token != null && token.isNotEmpty) "Authorization": "Bearer $token",
+      };
 
-      // --------------------------------------------------
-      // FORM DATA
-      // --------------------------------------------------
-      if (formData) {
-        var request = http.MultipartRequest('POST', Uri.parse(url));
-
-        if (token != null && token.isNotEmpty) {
-          request.headers['Authorization'] = 'Bearer $token';
-        }
-
-        data.forEach((key, value) {
-          request.fields[key] = value.toString();
-        });
-
-        var streamedResponse = await request.send().timeout(timeoutDuration);
-        response = await http.Response.fromStream(streamedResponse);
-      }
-
-      // --------------------------------------------------
-      // JSON
-      // --------------------------------------------------
-      else {
-        final Map<String, String> headers = {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          if (token != null && token.isNotEmpty)
-            "Authorization": "Bearer $token",
-        };
-
-        response = await http
-            .post(
-              Uri.parse(url),
-              headers: headers,
-              body: jsonEncode(data),
-            )
-            .timeout(timeoutDuration);
-      }
+      final http.Response response =
+          await http.get(uri, headers: headers).timeout(timeoutDuration);
 
       print("Response Status Code: ${response.statusCode}");
       print("Response: ${response.body}");
@@ -162,13 +141,13 @@ class PostApiCalls {
         failedCallback?.call(responseData);
       }
     } on TimeoutException {
-      print("POST API Error: Request timed out after $_timeoutSeconds seconds");
+      print("GET API Error: Request timed out after $_timeoutSeconds seconds");
       if (showFailedNotif) {
         _showNotification("Request timed out. Please try again.", false);
       }
       failedCallback?.call(null);
     } catch (e) {
-      print("POST API Error: $e");
+      print("GET API Error: $e");
       if (showFailedNotif) {
         _showNotification("Something went wrong", false);
       }

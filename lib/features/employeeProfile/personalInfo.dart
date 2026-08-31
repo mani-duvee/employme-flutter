@@ -53,11 +53,11 @@ class PersonalInfo extends StatelessWidget {
       textColor: Colors.white,
       child: Titles(
         title: "Personal Information",
-        action: true,
-        edit: true,
-        editFunction: editPersonalInfo,
-        view: true,
-        viewFunction: getEmployeeProfileData,
+        // action: true,
+        // edit: true,
+        // editFunction: editPersonalInfo,
+        // view: true,
+        // viewFunction: getEmployeeProfileData,
       ),
     );
   }
