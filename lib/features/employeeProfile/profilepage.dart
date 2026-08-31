@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../http/EmployeeStorage.dart';
 import '../../http/GetApiCall.dart';
 import '../../http/endpoints.dart';
 import './bio.dart';
@@ -18,7 +19,16 @@ class _ProfilepageState extends State<Profilepage> {
   @override
   void initState() {
     super.initState();
-    loadProfileData();
+    _fetchEmployerIdAndLoadProfile();
+  }
+
+  Future<void> _fetchEmployerIdAndLoadProfile() async {
+    final employerId = await EmployeeStorage.getEmployerId();
+    if (employerId != null && employerId.isNotEmpty) {
+      loadProfileData(pathParams: {'employerId': employerId});
+    } else {
+      loadProfileData();
+    }
   }
 
   @override
@@ -27,11 +37,16 @@ class _ProfilepageState extends State<Profilepage> {
     super.dispose();
   }
 
-  void loadProfileData() {
+  void loadProfileData({Map<String, String>? pathParams}) {
     GetApiCalls.get(
       endpoint: EMPLOYEE_PROFILE,
-      onLoadingStart: () => setState(() => loading = true),
-      onLoadingEnd: () => setState(() => loading = false),
+      pathParams: pathParams,
+      onLoadingStart: () {
+        if (mounted) setState(() => loading = true);
+      },
+      onLoadingEnd: () {
+        if (mounted) setState(() => loading = false);
+      },
       responseNotifier: profileNotifier,
       showSuccessNotif: false,
       showFailedNotif: false,

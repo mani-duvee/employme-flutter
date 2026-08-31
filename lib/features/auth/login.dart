@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../homePage.dart';
+import '../../http/EmployeeStorage.dart';
 import '../../http/PostApiCalls.dart';
 import '../../http/TokenStorage.dart';
 import '../../http/endpoints.dart';
@@ -58,12 +59,14 @@ class _LoginPageState extends State<LoginPage> {
       onLoadingEnd: () => setState(() => loading = false),
       successCallback: (response) async {
         await TokenStorage.saveTokensFromResponse(response);
+        await EmployeeStorage.saveEmployeeDetails(response);
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),
         );
       },
+
       failedCallback: (response) {
         if (!mounted) return;
         final message = (response is Map && response['message'] != null)
